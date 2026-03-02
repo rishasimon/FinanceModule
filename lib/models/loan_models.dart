@@ -1,20 +1,93 @@
 import 'package:flutter/material.dart';
 
-enum LoanType { simple, repayment, bridge }
+enum LoanType { home, education, vehicle, personal, business }
 
 extension LoanTypeX on LoanType {
   String get code => switch (this) {
-    LoanType.simple => 'SPL',
-    LoanType.repayment => 'RPL',
-    LoanType.bridge => 'BRG',
+    LoanType.home => 'HML',
+    LoanType.education => 'EDU',
+    LoanType.vehicle => 'VEH',
+    LoanType.personal => 'PER',
+    LoanType.business => 'BUS',
   };
 }
+
+enum LoanCaseStatus { documentsPending, underReview, approved, active }
 
 enum ApprovalState { complete, current, pending }
 
 enum DocumentState { requested, uploaded, verified }
 
 enum InstallmentState { paid, dueSoon, upcoming }
+
+class LoanDocumentTemplate {
+  const LoanDocumentTemplate({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.groupLabel,
+  });
+
+  final String id;
+  final String title;
+  final String description;
+  final String groupLabel;
+}
+
+class LocalDocumentFile {
+  const LocalDocumentFile({
+    required this.fileName,
+    required this.sizeLabel,
+    required this.uploadedAt,
+    this.path,
+  });
+
+  final String fileName;
+  final String sizeLabel;
+  final DateTime uploadedAt;
+  final String? path;
+
+  Map<String, dynamic> toJson() {
+    return {
+      'fileName': fileName,
+      'sizeLabel': sizeLabel,
+      'uploadedAt': uploadedAt.toIso8601String(),
+      'path': path,
+    };
+  }
+
+  factory LocalDocumentFile.fromJson(Map<String, dynamic> json) {
+    return LocalDocumentFile(
+      fileName: json['fileName'] as String? ?? '',
+      sizeLabel: json['sizeLabel'] as String? ?? '',
+      uploadedAt:
+          DateTime.tryParse(json['uploadedAt'] as String? ?? '') ??
+          DateTime.now(),
+      path: json['path'] as String?,
+    );
+  }
+}
+
+class DraftDocumentSelection {
+  const DraftDocumentSelection({
+    this.selectedForUpload = false,
+    this.attachment,
+  });
+
+  final bool selectedForUpload;
+  final LocalDocumentFile? attachment;
+
+  DraftDocumentSelection copyWith({
+    bool? selectedForUpload,
+    LocalDocumentFile? attachment,
+    bool clearAttachment = false,
+  }) {
+    return DraftDocumentSelection(
+      selectedForUpload: selectedForUpload ?? this.selectedForUpload,
+      attachment: clearAttachment ? null : attachment ?? this.attachment,
+    );
+  }
+}
 
 class LoanProduct {
   const LoanProduct({
@@ -47,7 +120,7 @@ class LoanProduct {
   final IconData icon;
   final Color accent;
   final List<String> highlights;
-  final List<String> requiredDocuments;
+  final List<LoanDocumentTemplate> requiredDocuments;
 }
 
 class LoanApplicationDraft {
@@ -73,7 +146,7 @@ class LoanApplicationDraft {
     required this.coApplicantName,
     required this.amount,
     required this.tenureMonths,
-    required this.readyDocuments,
+    required this.documentSelections,
   });
 
   final String fullName;
@@ -97,7 +170,7 @@ class LoanApplicationDraft {
   final String coApplicantName;
   final double amount;
   final int tenureMonths;
-  final Set<String> readyDocuments;
+  final Map<String, DraftDocumentSelection> documentSelections;
 
   LoanApplicationDraft copyWith({
     String? fullName,
@@ -121,7 +194,7 @@ class LoanApplicationDraft {
     String? coApplicantName,
     double? amount,
     int? tenureMonths,
-    Set<String>? readyDocuments,
+    Map<String, DraftDocumentSelection>? documentSelections,
   }) {
     return LoanApplicationDraft(
       fullName: fullName ?? this.fullName,
@@ -145,7 +218,7 @@ class LoanApplicationDraft {
       coApplicantName: coApplicantName ?? this.coApplicantName,
       amount: amount ?? this.amount,
       tenureMonths: tenureMonths ?? this.tenureMonths,
-      readyDocuments: readyDocuments ?? this.readyDocuments,
+      documentSelections: documentSelections ?? this.documentSelections,
     );
   }
 }
@@ -164,14 +237,20 @@ class ApprovalStep {
 
 class DocumentRequirement {
   const DocumentRequirement({
+    required this.id,
     required this.title,
     required this.description,
+    required this.groupLabel,
     required this.state,
+    this.attachment,
   });
 
+  final String id;
   final String title;
   final String description;
+  final String groupLabel;
   final DocumentState state;
+  final LocalDocumentFile? attachment;
 }
 
 class RepaymentInstallment {
@@ -197,6 +276,7 @@ class LoanCase {
     required this.tenureMonths,
     required this.purpose,
     required this.submittedOn,
+    required this.status,
     required this.statusLabel,
     required this.statusDetail,
     required this.nextAction,
@@ -213,6 +293,7 @@ class LoanCase {
   final int tenureMonths;
   final String purpose;
   final DateTime submittedOn;
+  final LoanCaseStatus status;
   final String statusLabel;
   final String statusDetail;
   final String nextAction;
@@ -220,4 +301,40 @@ class LoanCase {
   final List<ApprovalStep> approvalSteps;
   final List<DocumentRequirement> documents;
   final List<RepaymentInstallment> installments;
+
+  int get uploadedDocumentCount =>
+      documents.where((document) => document.attachment != null).length;
+
+  int get verifiedDocumentCount => documents
+      .where((document) => document.state == DocumentState.verified)
+      .length;
+
+  int get pendingDocumentCount => documents
+      .where((document) => document.state == DocumentState.requested)
+      .length;
+
+  Map<String, dynamic> toJson() {
+    return {
+      'applicationId': applicationId,
+      'loanType': product.type.name,
+      'applicantName': applicantName,
+      'amount': amount,
+      'tenureMonths': tenureMonths,
+      'purpose': purpose,
+      'submittedOn': submittedOn.toIso8601String(),
+      'status': status.name,
+      'documents': documents
+          .map(
+            (document) => {
+              'id': document.id,
+              'title': document.title,
+              'description': document.description,
+              'groupLabel': document.groupLabel,
+              'state': document.state.name,
+              'attachment': document.attachment?.toJson(),
+            },
+          )
+          .toList(),
+    };
+  }
 }

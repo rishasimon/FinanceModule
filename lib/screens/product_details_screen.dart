@@ -39,46 +39,34 @@ class ProductDetailsScreen extends StatelessWidget {
                         Row(
                           children: [
                             Container(
-                              height: 56,
-                              width: 56,
+                              height: 48,
+                              width: 48,
                               decoration: BoxDecoration(
                                 color: product.accent.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(18),
+                                borderRadius: BorderRadius.circular(14),
                               ),
                               child: Icon(product.icon, color: product.accent),
                             ),
-                            const SizedBox(width: 14),
+                            const SizedBox(width: 12),
                             Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    product.title,
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.headlineMedium,
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    product.subtitle,
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodyLarge,
-                                  ),
-                                ],
+                              child: Text(
+                                product.title,
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.headlineMedium,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 14),
                         Text(
                           product.summary,
                           style: Theme.of(context).textTheme.bodyLarge,
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 16),
                         Wrap(
-                          spacing: 10,
-                          runSpacing: 10,
+                          spacing: 8,
+                          runSpacing: 8,
                           children: [
                             StatusBadge(
                               label:
@@ -89,14 +77,9 @@ class ProductDetailsScreen extends StatelessWidget {
                               label: product.approvalTime,
                               color: const Color(0xFF103D63),
                             ),
-                            StatusBadge(
-                              label:
-                                  '${AppFormatters.currency(product.minAmount)} - ${AppFormatters.currency(product.maxAmount)}',
-                              color: const Color(0xFF14866D),
-                            ),
                           ],
                         ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 18),
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
@@ -107,117 +90,47 @@ class ProductDetailsScreen extends StatelessWidget {
                               Navigator.of(context).pop();
                               onApply();
                             },
-                            child: Text('Apply for ${product.title}'),
+                            child: const Text('Continue'),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      final compact = constraints.maxWidth < 960;
-                      final itemWidth = compact
-                          ? constraints.maxWidth
-                          : (constraints.maxWidth - 18) / 2;
-
-                      return Wrap(
-                        spacing: 18,
-                        runSpacing: 18,
+                  const SizedBox(height: 18),
+                  FrostPanel(
+                    child: Theme(
+                      data: Theme.of(
+                        context,
+                      ).copyWith(dividerColor: Colors.transparent),
+                      child: ExpansionTile(
+                        tilePadding: EdgeInsets.zero,
+                        title: const Text(
+                          'Required documents',
+                          style: TextStyle(fontWeight: FontWeight.w700),
+                        ),
                         children: [
-                          SizedBox(
-                            width: itemWidth,
-                            child: FrostPanel(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const SectionHeading(
-                                    eyebrow: 'Highlights',
-                                    title: 'What this product is built for',
-                                    subtitle:
-                                        'Use this page for the longer explanation instead of crowding the overview screen.',
-                                  ),
-                                  const SizedBox(height: 18),
-                                  ...product.highlights.map(
-                                    (item) => Padding(
-                                      padding: const EdgeInsets.only(
-                                        bottom: 12,
-                                      ),
-                                      child: _BulletLine(
-                                        text: item,
-                                        color: product.accent,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          SizedBox(
-                            width: itemWidth,
-                            child: FrostPanel(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const SectionHeading(
-                                    eyebrow: 'Requirements',
-                                    title: 'Documents usually requested',
-                                    subtitle:
-                                        'Borrowers can review supporting documents here before starting the application.',
-                                  ),
-                                  const SizedBox(height: 18),
-                                  ...product.requiredDocuments.map(
-                                    (document) => Padding(
-                                      padding: const EdgeInsets.only(
-                                        bottom: 12,
-                                      ),
-                                      child: _BulletLine(
-                                        text: document,
-                                        color: const Color(0xFF103D63),
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                          const SizedBox(height: 8),
+                          ...product.requiredDocuments.map(
+                            (document) => ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: Text(document.title),
+                              subtitle: Text(document.description),
+                              trailing: StatusBadge(
+                                label: document.groupLabel,
+                                color: product.accent,
                               ),
                             ),
                           ),
                         ],
-                      );
-                    },
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: 18),
                 ],
               ),
             ),
           ),
         ),
       ),
-    );
-  }
-}
-
-class _BulletLine extends StatelessWidget {
-  const _BulletLine({required this.text, required this.color});
-
-  final String text;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          margin: const EdgeInsets.only(top: 6),
-          height: 8,
-          width: 8,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(text, style: Theme.of(context).textTheme.bodyLarge),
-        ),
-      ],
     );
   }
 }

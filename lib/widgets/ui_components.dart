@@ -520,15 +520,34 @@ class DocumentTile extends StatelessWidget {
           final copy = Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                document.title,
-                style: Theme.of(context).textTheme.titleMedium,
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Text(
+                    document.title,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  StatusBadge(label: document.groupLabel, color: color),
+                ],
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 6),
               Text(
                 document.description,
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
+              if (document.attachment != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  '${document.attachment!.fileName} • ${document.attachment!.sizeLabel}',
+                  style: const TextStyle(
+                    color: Color(0xFF10243E),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
             ],
           );
 
